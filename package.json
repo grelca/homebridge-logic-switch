@@ -1,0 +1,31 @@
+{
+  "name": "homebridge-logic-switch",
+  "version": "0.0.0",
+  "description": "tbd",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grelca/homebridge-logic-switch.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/grelca/homebridge-logic-switch/issues"
+  },
+  "homepage": "https://github.com/grelca/homebridge-logic-switch#readme",
+  "devDependencies": {
+    "homebridge": "^1.4.0"
+  },
+  "dependencies": {
+    "node-persist": "^2.1.0"
+  },
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "engines": {
+    "homebridge": "^1.4.0"
+  }
+}
