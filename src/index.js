@@ -87,7 +87,9 @@ class LogicSwitch {
         this.inputValues[name] = value
         this.storage.setItemSync(name, value)
 
-        // TODO: update outputs
+        // TODO: only update outputs affected by this input
+        this._updateOutputs(Object.keys(this.outputServices))
+            .catch(err => this.logger.error('a problem occurred updating outputs', err))
     }
 
     _initOutputSensors(outputs) {
@@ -140,5 +142,12 @@ class LogicSwitch {
                     inputConfig => this._getInput(inputConfig.name) === inputConfig.value
                 )
         }
+    }
+
+    async _updateOutputs(names) {
+        names.forEach(name => {
+            const service = this.outputServices[name]
+            service.getCharacteristic(this.Characteristic.MotionDetected).updateValue(this._getOutput(name))
+        })
     }
 }
