@@ -1,3 +1,6 @@
+// TODO: only import what we need
+const _ = require('lodash')
+
 module.exports = function (homebridge) {
     homebridge.registerAccessory('homebridge-logic-switch', 'LogicSwitch', LogicSwitch)
 }
@@ -29,8 +32,8 @@ class LogicSwitch {
     getServices() {
         const services = [
             this.informationService,
-            Object.values(this.inputServices),
-            Object.values(this.outputServices)
+            _.values(this.inputServices),
+            _.values(this.outputServices)
         ].flat()
 
         if (services.length === 1) {
@@ -71,16 +74,16 @@ class LogicSwitch {
     // TODO: add logs about failed validations
     _validInputs(inputs) {
         // inputs must be an array
-        if(!Array.isArray(inputs)) {
+        if(!_.isArray(inputs)) {
             return []
         }
 
         // unique names which must be strings
-        return [...new Set(inputs)].filter(name => typeof name === 'string')
+        return _.uniq(inputs).filter(name => typeof name === 'string')
     }
 
     _getInput(name) {
-        return !!this.inputValues[name]
+        return !!_.get(this.inputValues, name, false)
     }
 
     _setInput(name, value) {
@@ -88,7 +91,7 @@ class LogicSwitch {
         this.storage.setItemSync(name, value)
 
         // TODO: only update outputs affected by this input
-        this._updateOutputs(Object.keys(this.outputServices))
+        this._updateOutputs(_.keys(this.outputServices))
             .catch(err => this.logger.error('a problem occurred updating outputs', err))
     }
 
@@ -100,7 +103,7 @@ class LogicSwitch {
             // create sensor service
             const service = new this.Service.MotionSensor(config.name, config.name)
             service.getCharacteristic(this.Characteristic.MotionDetected)
-                .onGet(async () => this._getOutput(config.name))
+                .onGet(async () => this._calcOutput(config.name))
 
             this.outputServices[config.name] = service
         })
@@ -109,45 +112,52 @@ class LogicSwitch {
     // TODO: add logs about failed validations
     _validOutputs(outputs) {
         // outputs must be an array
-        if(!Array.isArray(outputs)) {
+        if(!_.isArray(outputs)) {
             return []
         }
 
-        const outputNames = []
+        const outputNames = new Set()
         return outputs.filter(config => {
-            // unique output name, conditions must be an array
-            if(outputNames.indexOf(config.name) !== -1 || !Array.isArray(config.conditions)) {
+            // unique output name
+            if(outputNames.has(config.name)) {
                 return false
             }
 
-            outputNames.push(config.name)
+            outputNames.add(config.name)
 
-            return config.conditions.every(condition => {
+            // conditions must be an array
+            const conditions = _.get(config, 'conditions')
+            if(!_.isArray(conditions)) {
+                return false
+            }
+
+            return conditions.every(condition => {
                 return condition.name in this.inputValues // valid input name
                     && (condition.value === true || condition.value === false) // valid input value
             })
         })
     }
 
-    _getOutput(name) {
-        const config = this.outputConfigs[name] || {}
+    _calcOutput(name) {
+        const config = _.get(this.outputConfigs, name, {})
+        const { gate, conditions } = config
 
-        switch (config.gate) {
-            case 'OR':
-                return config.conditions.some(
-                    inputConfig => this._getInput(inputConfig.name) === inputConfig.value
-                )
-            default: // default == AND
-                return config.conditions.every(
-                    inputConfig => this._getInput(inputConfig.name) === inputConfig.value
-                )
+        const map = {
+            'OR': _.some,
+            'AND': _.every
         }
+
+        const method = _.get(map, gate, _.every) // default behavior is AND
+        return method(
+            conditions,
+            inputConfig => this._getInput(inputConfig.name) === inputConfig.value
+        )
     }
 
     async _updateOutputs(names) {
         names.forEach(name => {
             const service = this.outputServices[name]
-            service.getCharacteristic(this.Characteristic.MotionDetected).updateValue(this._getOutput(name))
+            service.getCharacteristic(this.Characteristic.MotionDetected).updateValue(this._calcOutput(name))
         })
     }
 }

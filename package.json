@@ -20,6 +20,7 @@
     "homebridge": "^1.4.0"
   },
   "dependencies": {
+    "lodash": "^4.17.21",
     "node-persist": "^2.1.0"
   },
   "keywords": [
