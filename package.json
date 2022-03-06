@@ -1,6 +1,6 @@
 {
   "name": "homebridge-logic-switch",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Logic-based switches for homebridge",
   "main": "index.js",
   "scripts": {
