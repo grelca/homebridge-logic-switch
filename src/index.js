@@ -1,5 +1,13 @@
-// TODO: only import what we need
-const _ = require('lodash')
+const each = require('lodash/each')
+const every = require('lodash/every')
+const get = require('lodash/get')
+const includes = require('lodash/includes')
+const intersection = require('lodash/intersection')
+const map = require('lodash/map')
+const pick = require('lodash/pick')
+const some = require('lodash/some')
+const uniq = require('lodash/uniq')
+const upperCase = require('lodash/upperCase')
 
 module.exports = function (homebridge) {
     homebridge.registerAccessory('homebridge-logic-switch', 'LogicSwitch', LogicSwitch)
@@ -7,9 +15,9 @@ module.exports = function (homebridge) {
 
 // TODO: support more logic gates?
 const LOGIC_GATES = {
-    AND: _.every,
-    OR: _.some,
-    NOT: (inputs, callback) => !_.some(inputs, callback)
+    AND: every,
+    OR: some,
+    NOT: (inputs, callback) => !some(inputs, callback)
 }
 
 class LogicSwitch {
@@ -45,7 +53,7 @@ class LogicSwitch {
             return []
         }
 
-        const services = _.map(this.switches, 'service')
+        const services = map(this.switches, 'service')
         this.logger.debug('num services', services.length)
 
         if (services.length > 0) {
@@ -66,7 +74,7 @@ class LogicSwitch {
 
     _initSwitches (switches) {
         // validate unique switch names
-        const uniqueSwitches = _.uniq(switches)
+        const uniqueSwitches = uniq(switches)
         if (uniqueSwitches.length !== switches.length) {
             this.logger.warn('please ensure switch names are unique')
         }
@@ -83,17 +91,17 @@ class LogicSwitch {
     }
 
     _configureSwitches (conditions) {
-        _.each(conditions, condition => {
-            const output = _.get(condition, 'output')
+        each(conditions, condition => {
+            const output = get(condition, 'output')
             if (!this.switches[output]) {
                 return this.logger.error(`invalid output: no configured ${output} switch`)
             }
 
-            const gate = _.get(condition, 'gate')
-            this.switches[output].gate = _.upperCase(gate)
+            const gate = get(condition, 'gate')
+            this.switches[output].gate = upperCase(gate)
 
-            const inputs = _.get(condition, 'inputs')
-            const validInputs = _.intersection(inputs, _.keys(this.switches))
+            const inputs = get(condition, 'inputs')
+            const validInputs = intersection(inputs, Object.keys(this.switches))
             this.switches[output].inputs = validInputs
 
             validInputs.forEach(input => this.switches[input].outputs.push(output))
@@ -101,7 +109,7 @@ class LogicSwitch {
     }
 
     _createServices () {
-        _.each(this.switches, s => {
+        each(this.switches, s => {
             if (s.inputs) {
                 s.service = this._createOutputService(s.name)
             } else {
@@ -159,23 +167,23 @@ class LogicSwitch {
         const { gate, inputs } = this.switches[name]
 
         // get comparison method, default is AND
-        const method = _.get(LOGIC_GATES, gate, _.every)
+        const method = get(LOGIC_GATES, gate, every)
 
         return method(
-            _.pick(this.switches, inputs),
+            pick(this.switches, inputs),
             input => !!input.value
         )
     }
 
     _detectLoops () {
-        this.hasLoop = _.some(this.switches, s => this._hasLoop(s, []))
+        this.hasLoop = some(this.switches, s => this._hasLoop(s, []))
     }
 
     // recursively look for logic loops
     _hasLoop (s, inputs) {
         this.logger.debug('checking for loops', s.name, inputs)
 
-        if (_.includes(inputs, s.name)) {
+        if (includes(inputs, s.name)) {
             this.logger.error('logic loop detected!', s.name, inputs)
             return true
         }
@@ -185,7 +193,7 @@ class LogicSwitch {
         }
 
         inputs.push(s.name)
-        return _.some(s.outputs, output => this._hasLoop(this.switches[output], inputs))
+        return some(s.outputs, output => this._hasLoop(this.switches[output], inputs))
     }
 
     // TODO: this could be made more efficient
