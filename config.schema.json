@@ -11,16 +11,6 @@
         "required": true,
         "default": "Logic Switches"
       },
-      "switches": {
-        "title": "Switch Names",
-        "description": "Initialize all switch names here before you can use them in rules below",
-        "type": "array",
-        "required": true,
-        "uniqueItems": true,
-        "items": {
-          "type": "string"
-        }
-      },
       "conditions": {
         "title": "Logic Rules",
         "type": "array",

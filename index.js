@@ -2,11 +2,9 @@ const each = require('lodash/each')
 const every = require('lodash/every')
 const get = require('lodash/get')
 const includes = require('lodash/includes')
-const intersection = require('lodash/intersection')
 const map = require('lodash/map')
 const pick = require('lodash/pick')
 const some = require('lodash/some')
-const uniq = require('lodash/uniq')
 const upperCase = require('lodash/upperCase')
 
 module.exports = function (homebridge) {
@@ -38,9 +36,8 @@ class LogicSwitch {
 
         this.name = config.name
 
-        const { switches, conditions } = config
+        const { conditions } = config
         this._initInformationService()
-        this._initSwitches(switches)
         this._configureSwitches(conditions)
         this._createServices()
         this._detectLoops()
@@ -72,39 +69,34 @@ class LogicSwitch {
             .setCharacteristic(this.Characteristic.SerialNumber, this.uuid.generate(this.name))
     }
 
-    _initSwitches (switches) {
-        // validate unique switch names
-        const uniqueSwitches = uniq(switches)
-        if (uniqueSwitches.length !== switches.length) {
-            this.logger.warn('please ensure switch names are unique')
-        }
+    _configureSwitches (conditions) {
+        each(conditions, condition => {
+            const output = get(condition, 'output')
+            const inputs = get(condition, 'inputs')
 
-        uniqueSwitches.forEach(name => {
+            this._createSwitches(inputs)
+            this._createSwitches([output])
+
+            const gate = get(condition, 'gate')
+            this.switches[output].gate = upperCase(gate)
+
+            this.switches[output].inputs = inputs
+            inputs.forEach(input => this.switches[input].outputs.push(output))
+        })
+    }
+
+    _createSwitches (names) {
+        each(names, name => {
+            if (this.switches[name]) {
+                return
+            }
+
             const storedValue = !!this.storage.getItemSync(this.name + name)
-
             this.switches[name] = {
                 name: name,
                 value: storedValue,
                 outputs: []
             }
-        })
-    }
-
-    _configureSwitches (conditions) {
-        each(conditions, condition => {
-            const output = get(condition, 'output')
-            if (!this.switches[output]) {
-                return this.logger.error(`invalid output: no configured ${output} switch`)
-            }
-
-            const gate = get(condition, 'gate')
-            this.switches[output].gate = upperCase(gate)
-
-            const inputs = get(condition, 'inputs')
-            const validInputs = intersection(inputs, Object.keys(this.switches))
-            this.switches[output].inputs = validInputs
-
-            validInputs.forEach(input => this.switches[input].outputs.push(output))
         })
     }
 
