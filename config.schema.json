@@ -1,0 +1,64 @@
+{
+  "pluginAlias": "LogicSwitch",
+  "pluginType": "accessory",
+  "singular": false,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "required": true,
+        "default": "Logic Switches"
+      },
+      "switches": {
+        "title": "Switch Names",
+        "description": "Initialize all switch names here before you can use them in rules below",
+        "type": "array",
+        "required": true,
+        "uniqueItems": true,
+        "items": {
+          "type": "string"
+        }
+      },
+      "conditions": {
+        "title": "Logic Rules",
+        "type": "array",
+        "required": true,
+        "uniqueItems": true,
+        "items": {
+          "type": "object",
+          "properties": {
+            "output": {
+              "title": "Output Name",
+              "description": "The name of the switch this rule controls",
+              "type": "string",
+              "required": true
+            },
+            "gate": {
+              "title": "Logic Type",
+              "description": "When should this output be activated?",
+              "type": "string",
+              "required": true,
+              "default": "AND",
+              "oneOf":[
+                { "title": "When ALL of the selected inputs are enabled", "enum": ["AND"] },
+                { "title": "When ANY of the selected inputs are enabled", "enum": ["OR"] },
+                { "title": "When NONE of the selected inputs are enabled", "enum": ["NOT"] }
+              ]
+            },
+            "inputs": {
+              "title": "Input Names",
+              "description": "Provided inputs which control the output value",
+              "type": "array",
+              "required": true,
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
