@@ -5,159 +5,168 @@ module.exports = function (homebridge) {
     homebridge.registerAccessory('homebridge-logic-switch', 'LogicSwitch', LogicSwitch)
 }
 
+// TODO: support more logic gates?
+const LOGIC_GATES = {
+    AND: _.every,
+    OR: _.some,
+    NOT: (inputs, callback) => !_.some(inputs, callback)
+}
+
 class LogicSwitch {
-    constructor(logger, config, homebridge) {
+    switches = {}
+
+    constructor (logger, config, homebridge) {
         this.logger = logger
 
         this.Service = homebridge.hap.Service
         this.Characteristic = homebridge.hap.Characteristic
         this.uuid = homebridge.hap.uuid
 
-        // TODO: make stateful an option
+        // TODO: make whether this is stateful or not configurable
         const dir = homebridge.user.persistPath();
         this.storage = require('node-persist');
         this.storage.initSync({ dir, forgiveParseErrors: true });
 
-        this.inputServices = {}
-        this.inputValues = {}
-        this.outputServices = {}
-        this.outputConfigs = {}
+        this.name = config.name
 
-        const { name, inputs, outputs } = config
-        this._initInformationService(name)
-        this._initInputSwitches(inputs)
-        this._initOutputSensors(outputs)
+        const { switches, conditions } = config
+        this._initInformationService()
+        this._initSwitches(switches)
+        this._configureSwitches(conditions)
+        this._createServices()
+        this._detectLoops()
+        this._initOutputValues()
     }
 
-    getServices() {
-        const services = [
-            this.informationService,
-            _.values(this.inputServices),
-            _.values(this.outputServices)
-        ].flat()
+    getServices () {
+        const services = _.map(this.switches, 'service')
+        this.logger.debug('num services', services.length)
 
-        if (services.length === 1) {
+        if (services.length > 0) {
             // don't return information service without any actual accessories
-            return []
+            services.unshift(this.informationService)
         }
 
         return services
     }
 
-    _initInformationService(name) {
-        this.logger.debug(this.uuid.generate(name))
+    _initInformationService () {
         this.informationService = new this.Service.AccessoryInformation()
         this.informationService.setCharacteristic(this.Characteristic.Manufacturer, 'Logic Switch')
             .setCharacteristic(this.Characteristic.Model, 'Logic Switch')
-            .setCharacteristic(this.Characteristic.FirmwareRevision, '0.0.0') // TODO: use version from package.json
-            .setCharacteristic(this.Characteristic.SerialNumber, this.uuid.generate(name))
+            .setCharacteristic(this.Characteristic.FirmwareRevision, require('../package.json').version)
+            .setCharacteristic(this.Characteristic.SerialNumber, this.uuid.generate(this.name))
     }
 
-    _initInputSwitches(inputs) {
-        this._validInputs(inputs).forEach(name => {
-            // set initial switch value
-            this.inputValues[name] = this.storage.getItemSync(name)
+    _initSwitches (switches) {
+        // validate unique switch names
+        const uniqueSwitches = _.uniq(switches)
+        if (uniqueSwitches.length !== switches.length) {
+            this.logger.warn('please ensure switch names are unique')
+        }
 
-            // create switch service
-            this.logger.debug(this.uuid.generate(name))
-            const service = new this.Service.Switch(name, name)
+        uniqueSwitches.forEach(name => {
+            const storedValue = !!this.storage.getItemSync(this.name + name)
 
-            // set handlers
-            service.getCharacteristic(this.Characteristic.On)
-                .onGet(async () => this._getInput(name))
-                .onSet(async (value) => this._setInput(name, value))
-
-            this.inputServices[name] = service
+            this.switches[name] = {
+                name: name,
+                value: storedValue,
+                outputs: []
+            }
         })
     }
 
-    // TODO: add logs about failed validations
-    _validInputs(inputs) {
-        // inputs must be an array
-        if(!_.isArray(inputs)) {
-            return []
-        }
-
-        // unique names which must be strings
-        return _.uniq(inputs).filter(name => typeof name === 'string')
-    }
-
-    _getInput(name) {
-        return !!_.get(this.inputValues, name, false)
-    }
-
-    _setInput(name, value) {
-        this.inputValues[name] = value
-        this.storage.setItemSync(name, value)
-
-        // TODO: only update outputs affected by this input
-        this._updateOutputs(_.keys(this.outputServices))
-            .catch(err => this.logger.error('a problem occurred updating outputs', err))
-    }
-
-    _initOutputSensors(outputs) {
-        this._validOutputs(outputs).forEach(config => {
-            // keep track of the output configs
-            this.outputConfigs[config.name] = config
-
-            // create sensor service
-            const service = new this.Service.MotionSensor(config.name, config.name)
-            service.getCharacteristic(this.Characteristic.MotionDetected)
-                .onGet(async () => this._calcOutput(config.name))
-
-            this.outputServices[config.name] = service
-        })
-    }
-
-    // TODO: add logs about failed validations
-    _validOutputs(outputs) {
-        // outputs must be an array
-        if(!_.isArray(outputs)) {
-            return []
-        }
-
-        const outputNames = new Set()
-        return outputs.filter(config => {
-            // unique output name
-            if(outputNames.has(config.name)) {
-                return false
+    _configureSwitches (conditions) {
+        _.each(conditions, condition => {
+            const output = _.get(condition, 'output')
+            if (!this.switches[output]) {
+                return this.logger.error(`invalid output: no configured ${output} switch`)
             }
 
-            outputNames.add(config.name)
+            const gate = _.get(condition, 'gate')
+            this.switches[output].gate = _.upperCase(gate)
 
-            // conditions must be an array
-            const conditions = _.get(config, 'conditions')
-            if(!_.isArray(conditions)) {
-                return false
-            }
+            const inputs = _.get(condition, 'inputs')
+            const validInputs = _.intersection(inputs, _.keys(this.switches))
+            this.switches[output].inputs = validInputs
 
-            return conditions.every(condition => {
-                return condition.name in this.inputValues // valid input name
-                    && (condition.value === true || condition.value === false) // valid input value
-            })
+            validInputs.forEach(input => this.switches[input].outputs.push(output))
         })
     }
 
-    _calcOutput(name) {
-        const config = _.get(this.outputConfigs, name, {})
-        const { gate, conditions } = config
+    _createServices () {
+        _.each(this.switches, s => {
+            if (s.inputs) {
+                s.service = this._createOutputService(s.name)
+            } else {
+                s.service = this._createInputService(s.name)
+            }
+        })
+    }
 
-        const map = {
-            'OR': _.some,
-            'AND': _.every
-        }
+    _createInputService (name) {
+        const service = new this.Service.Switch(name, name)
+        service.getCharacteristic(this.Characteristic.On)
+            .onGet(async () => this._getValue(name))
+            .onSet(async (value) => this._setValue(name, value))
 
-        const method = _.get(map, gate, _.every) // default behavior is AND
+        return service
+    }
+
+    _createOutputService (name) {
+        const service = new this.Service.MotionSensor(name, name)
+        service.getCharacteristic(this.Characteristic.MotionDetected)
+            .onGet(async () => this._getValue(name))
+
+        return service
+    }
+
+    _getValue (name) {
+        return !!this.switches[name].value
+    }
+
+    _setValue (name, value) {
+        this.logger.info(`setting ${name} to ${value}`)
+
+        this.switches[name].value = value
+        this.storage.setItemSync(this.name + name, value)
+
+        this._updateOutputs(name)
+    }
+
+    _updateOutputs (name) {
+        const { outputs } = this.switches[name]
+        outputs.forEach(output => {
+            const newValue = this._calcOutput(output)
+            if (!!newValue === !!this._getValue(output)) {
+                return this.logger.debug(`${output} value not changed`)
+            }
+
+            const { service } = this.switches[output]
+            service.getCharacteristic(this.Characteristic.MotionDetected).updateValue(newValue)
+
+            this._setValue(output, newValue)
+        })
+    }
+
+    _calcOutput (name) {
+        const { gate, inputs } = this.switches[name]
+
+        // get comparison method, default is AND
+        const method = _.get(LOGIC_GATES, gate, _.every)
+
         return method(
-            conditions,
-            inputConfig => this._getInput(inputConfig.name) === inputConfig.value
+            _.pick(this.switches, inputs),
+            input => !!input.value
         )
     }
 
-    async _updateOutputs(names) {
-        names.forEach(name => {
-            const service = this.outputServices[name]
-            service.getCharacteristic(this.Characteristic.MotionDetected).updateValue(this._calcOutput(name))
-        })
+    _detectLoops () {
+        // TODO
+    }
+
+    // TODO: this could be made more efficient
+    _initOutputValues () {
+        Object.keys(this.switches).forEach(this._updateOutputs.bind(this))
     }
 }
