@@ -68,7 +68,7 @@ class LogicSwitch {
         this.informationService = new this.Service.AccessoryInformation()
         this.informationService.setCharacteristic(this.Characteristic.Manufacturer, 'Logic Switch')
             .setCharacteristic(this.Characteristic.Model, 'Logic Switch')
-            .setCharacteristic(this.Characteristic.FirmwareRevision, require('../package.json').version)
+            .setCharacteristic(this.Characteristic.FirmwareRevision, require('./package.json').version)
             .setCharacteristic(this.Characteristic.SerialNumber, this.uuid.generate(this.name))
     }
 
