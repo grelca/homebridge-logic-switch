@@ -14,6 +14,7 @@ const LOGIC_GATES = {
 
 class LogicSwitch {
     switches = {}
+    hasLoop = false
 
     constructor (logger, config, homebridge) {
         this.logger = logger
@@ -39,6 +40,11 @@ class LogicSwitch {
     }
 
     getServices () {
+        // TODO: make this smarter, disable only the outputs with invalid inputs
+        if (this.hasLoop) {
+            return []
+        }
+
         const services = _.map(this.switches, 'service')
         this.logger.debug('num services', services.length)
 
@@ -162,11 +168,32 @@ class LogicSwitch {
     }
 
     _detectLoops () {
-        // TODO
+        this.hasLoop = _.some(this.switches, s => this._hasLoop(s, []))
+    }
+
+    // recursively look for logic loops
+    _hasLoop (s, inputs) {
+        this.logger.debug('checking for loops', s.name, inputs)
+
+        if (_.includes(inputs, s.name)) {
+            this.logger.error('logic loop detected!', s.name, inputs)
+            return true
+        }
+
+        if (s.outputs.length === 0) {
+            return false
+        }
+
+        inputs.push(s.name)
+        return _.some(s.outputs, output => this._hasLoop(this.switches[output], inputs))
     }
 
     // TODO: this could be made more efficient
     _initOutputValues () {
+        if (this.hasLoop) {
+            return
+        }
+
         Object.keys(this.switches).forEach(this._updateOutputs.bind(this))
     }
 }
