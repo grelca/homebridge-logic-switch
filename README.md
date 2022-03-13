@@ -1,5 +1,7 @@
 # homebridge-logic-switch
 
+[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
+
 With this plugin, you can create rule-based switches and sensors. When input switches are turned on or off,
 corresponding output sensors are activated or deactivated based on configured rules. The same inputs can be
 used across multiple outputs sensors, and your output sensors can also be reused as an input for another
