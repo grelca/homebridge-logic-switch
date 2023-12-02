@@ -10,17 +10,14 @@ class LogicSwitch {
     hasLoop = false
 
     constructor (logger, config, homebridge) {
-        this.hap = homebridge.hap
-        this.name = config.name
-
         // TODO: make whether this is stateful or not configurable
         const dir = homebridge.user.persistPath();
         const cache = new Cache(dir, config.name)
 
-        this.switchService = new SwitchService(this.hap, cache, logger)
+        this.switchService = new SwitchService(homebridge.hap, cache, logger)
         this.dependencyChecker = new DependencyChecker(logger)
 
-        this._initInformationService()
+        this._initInformationService(homebridge.hap, config.name)
         this._configureSwitches(config)
         this._createServices()
         this._detectLoops()
@@ -42,12 +39,12 @@ class LogicSwitch {
         return services
     }
 
-    _initInformationService () {
-        this.informationService = new this.hap.Service.AccessoryInformation()
-        this.informationService.setCharacteristic(this.hap.Characteristic.Manufacturer, 'Logic Switch')
-            .setCharacteristic(this.hap.Characteristic.Model, 'Logic Switch')
-            .setCharacteristic(this.hap.Characteristic.FirmwareRevision, require('./package.json').version)
-            .setCharacteristic(this.hap.Characteristic.SerialNumber, this.hap.uuid.generate(this.name))
+    _initInformationService (hap, name) {
+        this.informationService = new hap.Service.AccessoryInformation()
+        this.informationService.setCharacteristic(hap.Characteristic.Manufacturer, 'Logic Switch')
+            .setCharacteristic(hap.Characteristic.Model, 'Logic Switch')
+            .setCharacteristic(hap.Characteristic.FirmwareRevision, require('./package.json').version)
+            .setCharacteristic(hap.Characteristic.SerialNumber, hap.uuid.generate(name))
     }
 
     _configureSwitches ({ conditions }) {
