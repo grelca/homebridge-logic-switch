@@ -1,8 +1,14 @@
+const pick = require('lodash/pick')
+
 class SwitchStore {
   static switches = {}
 
-  static get (name) {
+  static getOne (name) {
     return this.switches[name]
+  }
+
+  static getList (...names) {
+    return Object.values(pick(this.switches, names))
   }
 
   static all () {

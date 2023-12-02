@@ -44,7 +44,7 @@ class SwitchService {
       SwitchStore.add(name, s)
     }
 
-    return SwitchStore.get(name)
+    return SwitchStore.getOne(name)
   }
 
   createHAPServices () {
