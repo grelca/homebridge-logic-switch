@@ -3,26 +3,17 @@ const map = require('lodash/map')
 const upperCase = require('lodash/upperCase')
 
 const SwitchAccessory = require("./switchAccessory")
+const SwitchStore = require('./switchStore')
 
 class SwitchService {
-  switches = {}
-
   constructor (hap, cache, logger) {
     this.hap = hap
     this.cache = cache
     this.logger = logger
   }
 
-  getSwitch (name) {
-    return this.switches[name]
-  }
-
-  getAllSwitches () {
-    return this.switches
-  }
-
   getAllServices () {
-    const services = map(this.switches, 'service')
+    const services = map(SwitchStore.all(), 'service')
     this.logger.debug('num services', services.length)
 
     return services
@@ -47,20 +38,21 @@ class SwitchService {
   }
 
   _createSwitch (name) {
-    if (!this.switches[name]) {
-      this.switches[name] = new SwitchAccessory(name, this.cache, this.logger)
+    if (!SwitchStore.exists(name)) {
+      const s = new SwitchAccessory(name, this.cache, this.logger)
+      SwitchStore.add(name, s)
     }
 
-    return this.getSwitch(name)
+    return SwitchStore.get(name)
   }
 
   createServices () {
-    each(this.switches, s => s.configureService(this.hap))
+    each(SwitchStore.all(), s => s.configureService(this.hap))
   }
 
   initSwitchValues () {
     // TODO: this could be made more efficient
-    each(this.switches, input => each(input.outputs, output => output.recalculate()))
+    each(SwitchStore.all(), input => each(input.outputs, output => output.recalculate()))
   }
 }
 

@@ -1,15 +1,16 @@
 const includes = require('lodash/includes')
 const some = require('lodash/some')
 
+const SwitchStore = require('./switchStore')
+
 // utility class to make sure there are no circular dependencies
 class DependencyChecker {
-  constructor (switchService, logger) {
-    this.switchService = switchService
+  constructor (logger) {
     this.logger = logger
   }
 
   hasLoop () {
-    return some(this.switchService.getAllSwitches(), s => this._hasLoopRecursive(s))
+    return some(SwitchStore.all(), s => this._hasLoopRecursive(s))
   }
 
   _hasLoopRecursive (s, inputs = []) {

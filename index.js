@@ -18,7 +18,7 @@ class LogicSwitch {
         const cache = new Cache(dir, config.name)
 
         this.switchService = new SwitchService(this.hap, cache, logger)
-        this.dependencyChecker = new DependencyChecker(this.switchService, logger)
+        this.dependencyChecker = new DependencyChecker(logger)
 
         this._initInformationService()
         this._configureSwitches(config)
