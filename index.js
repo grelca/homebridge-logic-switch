@@ -7,6 +7,8 @@ const pick = require('lodash/pick')
 const some = require('lodash/some')
 const upperCase = require('lodash/upperCase')
 
+const Cache = require('./src/cache')
+
 module.exports = function (homebridge) {
     homebridge.registerAccessory('homebridge-logic-switch', 'LogicSwitch', LogicSwitch)
 }
@@ -31,8 +33,7 @@ class LogicSwitch {
 
         // TODO: make whether this is stateful or not configurable
         const dir = homebridge.user.persistPath();
-        this.storage = require('node-persist');
-        this.storage.initSync({ dir, forgiveParseErrors: true });
+        this.cache = new Cache(dir)
 
         this.name = config.name
 
@@ -91,7 +92,7 @@ class LogicSwitch {
                 return
             }
 
-            const storedValue = !!this.storage.getItemSync(this.name + name)
+            const storedValue = !!this.cache.get(this.name + name)
             this.switches[name] = {
                 name: name,
                 value: storedValue,
@@ -135,7 +136,7 @@ class LogicSwitch {
         this.logger.info(`setting ${name} to ${value}`)
 
         this.switches[name].value = value
-        this.storage.setItemSync(this.name + name, value)
+        this.cache.set(this.name + name, value)
 
         this._updateOutputs(name)
     }
