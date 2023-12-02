@@ -1,23 +1,15 @@
 const each = require('lodash/each')
-const every = require('lodash/every')
 const get = require('lodash/get')
 const includes = require('lodash/includes')
 const map = require('lodash/map')
-const pick = require('lodash/pick')
 const some = require('lodash/some')
 const upperCase = require('lodash/upperCase')
 
 const Cache = require('./src/cache')
+const Switch = require('./src/switch')
 
 module.exports = function (homebridge) {
     homebridge.registerAccessory('homebridge-logic-switch', 'LogicSwitch', LogicSwitch)
-}
-
-// TODO: support more logic gates?
-const LOGIC_GATES = {
-    AND: every,
-    OR: some,
-    NOT: (inputs, callback) => !some(inputs, callback)
 }
 
 class LogicSwitch {
@@ -27,15 +19,12 @@ class LogicSwitch {
     constructor (logger, config, homebridge) {
         this.logger = logger
 
-        this.Service = homebridge.hap.Service
-        this.Characteristic = homebridge.hap.Characteristic
-        this.uuid = homebridge.hap.uuid
+        this.hap = homebridge.hap
+        this.name = config.name
 
         // TODO: make whether this is stateful or not configurable
         const dir = homebridge.user.persistPath();
-        this.cache = new Cache(dir)
-
-        this.name = config.name
+        this.cache = new Cache(dir, this.name)
 
         const { conditions } = config
         this._initInformationService()
@@ -63,11 +52,11 @@ class LogicSwitch {
     }
 
     _initInformationService () {
-        this.informationService = new this.Service.AccessoryInformation()
-        this.informationService.setCharacteristic(this.Characteristic.Manufacturer, 'Logic Switch')
-            .setCharacteristic(this.Characteristic.Model, 'Logic Switch')
-            .setCharacteristic(this.Characteristic.FirmwareRevision, require('./package.json').version)
-            .setCharacteristic(this.Characteristic.SerialNumber, this.uuid.generate(this.name))
+        this.informationService = new this.hap.Service.AccessoryInformation()
+        this.informationService.setCharacteristic(this.hap.Characteristic.Manufacturer, 'Logic Switch')
+            .setCharacteristic(this.hap.Characteristic.Model, 'Logic Switch')
+            .setCharacteristic(this.hap.Characteristic.FirmwareRevision, require('./package.json').version)
+            .setCharacteristic(this.hap.Characteristic.SerialNumber, this.hap.uuid.generate(this.name))
     }
 
     _configureSwitches (conditions) {
@@ -75,97 +64,29 @@ class LogicSwitch {
             const output = get(condition, 'output')
             const inputs = get(condition, 'inputs')
 
-            this._createSwitches(inputs)
-            this._createSwitches([output])
+            const inputSwitches = this._createSwitches(inputs)
+            const outputSwitch = this._createSwitches([output])[0]
 
             const gate = get(condition, 'gate')
-            this.switches[output].gate = upperCase(gate)
+            outputSwitch.gateType = upperCase(gate)
 
-            this.switches[output].inputs = inputs
-            inputs.forEach(input => this.switches[input].outputs.push(output))
+            outputSwitch.inputs = inputSwitches
+            each(inputSwitches, input => input.outputs.push(outputSwitch))
         })
     }
 
     _createSwitches (names) {
-        each(names, name => {
-            if (this.switches[name]) {
-                return
+        return map(names, name => {
+            if (!this.switches[name]) {
+                this.switches[name] = new Switch(name, this.cache, this.logger)
             }
 
-            const storedValue = !!this.cache.get(this.name + name)
-            this.switches[name] = {
-                name: name,
-                value: storedValue,
-                outputs: []
-            }
+            return this.switches[name]
         })
     }
 
     _createServices () {
-        each(this.switches, s => {
-            if (s.inputs) {
-                s.service = this._createOutputService(s.name)
-            } else {
-                s.service = this._createInputService(s.name)
-            }
-        })
-    }
-
-    _createInputService (name) {
-        const service = new this.Service.Switch(name, name)
-        service.getCharacteristic(this.Characteristic.On)
-            .onGet(async () => this._getValue(name))
-            .onSet(async (value) => this._setValue(name, value))
-
-        return service
-    }
-
-    _createOutputService (name) {
-        const service = new this.Service.MotionSensor(name, name)
-        service.getCharacteristic(this.Characteristic.MotionDetected)
-            .onGet(async () => this._getValue(name))
-
-        return service
-    }
-
-    _getValue (name) {
-        return !!this.switches[name].value
-    }
-
-    _setValue (name, value) {
-        this.logger.info(`setting ${name} to ${value}`)
-
-        this.switches[name].value = value
-        this.cache.set(this.name + name, value)
-
-        this._updateOutputs(name)
-    }
-
-    _updateOutputs (name) {
-        const { outputs } = this.switches[name]
-        outputs.forEach(output => {
-            const newValue = this._calcOutput(output)
-            if (!!newValue === !!this._getValue(output)) {
-                return this.logger.debug(`${output} value not changed`)
-            }
-
-            const { service } = this.switches[output]
-            service.getCharacteristic(this.Characteristic.MotionDetected).updateValue(newValue)
-
-            this._setValue(output, newValue)
-        })
-    }
-
-    _calcOutput (name) {
-        const { gate, inputs } = this.switches[name]
-
-        // get comparison method, default is AND
-        const method = get(LOGIC_GATES, gate, every)
-
-        return method(
-            pick(this.switches, inputs),
-            input => !!input.value
-        )
+        each(this.switches, s => s.configureService(this.hap))
     }
 
     _detectLoops () {
@@ -186,7 +107,7 @@ class LogicSwitch {
         }
 
         inputs.push(s.name)
-        return some(s.outputs, output => this._hasLoop(this.switches[output], inputs))
+        return some(s.outputs, output => this._hasLoop(output, inputs))
     }
 
     // TODO: this could be made more efficient
@@ -195,6 +116,6 @@ class LogicSwitch {
             return
         }
 
-        Object.keys(this.switches).forEach(this._updateOutputs.bind(this))
+        each(this.switches, input => each(input.outputs, output => output.recalculate()))
     }
 }
