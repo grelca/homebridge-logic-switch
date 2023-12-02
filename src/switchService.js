@@ -27,9 +27,9 @@ class SwitchService {
       const outputSwitch = this._createSwitches([output])[0]
 
       outputSwitch.gateType = upperCase(gate)
-      outputSwitch.inputs = inputSwitches
+      outputSwitch.inputs = inputs
 
-      each(inputSwitches, input => input.outputs.push(outputSwitch))
+      each(inputSwitches, input => input.outputs.push(output))
     })
   }
 
@@ -53,7 +53,7 @@ class SwitchService {
 
   initSwitchValues () {
     // TODO: this could be made more efficient
-    each(SwitchStore.all(), input => each(input.outputs, output => output.recalculate()))
+    each(SwitchStore.all(), input => each(input.getOutputs(), output => output.recalculate()))
   }
 }
 

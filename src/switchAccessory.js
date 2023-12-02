@@ -2,6 +2,8 @@ const every = require('lodash/every')
 const get = require('lodash/get')
 const some = require('lodash/some')
 
+const SwitchStore = require('./switchStore')
+
 // TODO: support more logic gates?
 const LOGIC_GATES = {
   AND: every,
@@ -24,12 +26,20 @@ class SwitchAccessory {
     this.gateType = 'AND' // TODO better initialization
   }
 
+  getInputs () {
+    return SwitchStore.getList(this.inputs)
+  }
+
+  getOutputs () {
+    return SwitchStore.getList(this.outputs)
+  }
+
   isInput () {
-    return this.outputs.length > 0
+    return this.getOutputs().length > 0
   }
 
   isOutput () {
-    return this.inputs.length > 0
+    return this.getInputs().length > 0
   }
 
   createHAPService (hap) {
@@ -51,7 +61,7 @@ class SwitchAccessory {
     }
 
     const method = get(LOGIC_GATES, this.gateType, LOGIC_GATES.AND)
-    const newValue = method(this.inputs, input => !!input.value)
+    const newValue = method(this.getInputs(), input => !!input.value)
 
     if (!!newValue === !!this.value) {
       return this.logger.debug(`${this.name} value not changed`)
@@ -67,7 +77,7 @@ class SwitchAccessory {
     this.value = value
     this.cache.set(this.name, value)
 
-    this.outputs.forEach(output => output.recalculate())
+    this.getOutputs().forEach(output => output.recalculate())
   }
 }
 

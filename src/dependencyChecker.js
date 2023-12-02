@@ -26,7 +26,7 @@ class DependencyChecker {
     }
 
     inputs.push(s.name)
-    return some(s.outputs, output => this._hasLoopRecursive(output, inputs))
+    return some(s.getOutputs(), output => this._hasLoopRecursive(output, inputs))
   }
 }
 
