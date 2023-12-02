@@ -33,7 +33,7 @@ class LogicSwitch {
             return []
         }
 
-        const services = this.switchService.getAllServices()
+        const services = this.switchService.getHAPServices()
         if (services.length > 0) {
             // don't return information service without any actual accessories
             services.unshift(this.informationService)
@@ -55,7 +55,7 @@ class LogicSwitch {
     }
 
     _createServices () {
-        this.switchService.createServices()
+        this.switchService.createHAPServices()
     }
 
     _detectLoops () {

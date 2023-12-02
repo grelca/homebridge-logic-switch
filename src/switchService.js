@@ -12,7 +12,7 @@ class SwitchService {
     this.logger = logger
   }
 
-  getAllServices () {
+  getHAPServices () {
     const services = map(SwitchStore.all(), 'service')
     this.logger.debug('num services', services.length)
 
@@ -46,8 +46,8 @@ class SwitchService {
     return SwitchStore.get(name)
   }
 
-  createServices () {
-    each(SwitchStore.all(), s => s.configureService(this.hap))
+  createHAPServices () {
+    each(SwitchStore.all(), s => s.createHAPService(this.hap))
   }
 
   initSwitchValues () {

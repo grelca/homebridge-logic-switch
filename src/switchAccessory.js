@@ -33,7 +33,7 @@ class SwitchAccessory {
     return this.inputs.length > 0
   }
 
-  configureService (hap) {
+  createHAPService (hap) {
     if (this.isOutput()) {
       this.service = new hap.Service.MotionSensor(this.name, this.name)
       this.characteristic = this.service.getCharacteristic(hap.Characteristic.MotionDetected)
