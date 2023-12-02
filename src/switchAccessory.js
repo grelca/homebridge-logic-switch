@@ -10,12 +10,11 @@ const LOGIC_GATES = {
 }
 
 class SwitchAccessory {
-  constructor (name, cache, logger) {
+  constructor (name, value, cache, logger) {
     this.name = name
+    this.value = value
     this.cache = cache
     this.logger = logger
-
-    this.value = this.cache.get(name)
 
     // input switches have outputs
     this.outputs = [] // TODO better initialization

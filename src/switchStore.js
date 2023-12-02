@@ -6,7 +6,7 @@ class SwitchStore {
   }
 
   static all () {
-    return this.switches
+    return Object.values(this.switches)
   }
 
   static exists (name) {

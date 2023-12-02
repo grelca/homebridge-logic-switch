@@ -39,7 +39,8 @@ class SwitchService {
 
   _createSwitch (name) {
     if (!SwitchStore.exists(name)) {
-      const s = new SwitchAccessory(name, this.cache, this.logger)
+      const value = this.cache.get(name)
+      const s = new SwitchAccessory(name, value, this.cache, this.logger)
       SwitchStore.add(name, s)
     }
 
