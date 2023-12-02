@@ -1,6 +1,7 @@
 const every = require('lodash/every')
 const get = require('lodash/get')
 const some = require('lodash/some')
+const upperCase = require('lodash/upperCase')
 
 const SwitchStore = require('./switchStore')
 
@@ -12,18 +13,15 @@ const LOGIC_GATES = {
 }
 
 class SwitchAccessory {
+  inputs = []
+  outputs = []
+  logicGate = 'AND'
+
   constructor (name, value, cache, logger) {
     this.name = name
     this.value = value
     this.cache = cache
     this.logger = logger
-
-    // input switches have outputs
-    this.outputs = [] // TODO better initialization
-
-    // output switches have inputs and a gate type
-    this.inputs = [] // TODO better initialization
-    this.gateType = 'AND' // TODO better initialization
   }
 
   getInputs () {
@@ -40,6 +38,15 @@ class SwitchAccessory {
 
   isOutput () {
     return this.getInputs().length > 0
+  }
+
+  updateInputs (inputs, gate) {
+    this.inputs = inputs
+    this.logicGate = upperCase(gate)
+  }
+
+  updateOutputs (output) {
+    this.outputs.push(output)
   }
 
   createHAPService (hap) {
@@ -60,7 +67,7 @@ class SwitchAccessory {
       return this.logger.debug(`${this.name} is not an output switch`)
     }
 
-    const method = get(LOGIC_GATES, this.gateType, LOGIC_GATES.AND)
+    const method = get(LOGIC_GATES, this.logicGate, LOGIC_GATES.AND)
     const newValue = method(this.getInputs(), input => !!input.value)
 
     if (!!newValue === !!this.value) {

@@ -26,10 +26,8 @@ class SwitchService {
       const inputSwitches = this._createSwitches(inputs)
       const outputSwitch = this._createSwitches([output])[0]
 
-      outputSwitch.gateType = upperCase(gate)
-      outputSwitch.inputs = inputs
-
-      each(inputSwitches, input => input.outputs.push(output))
+      each(inputSwitches, input => input.updateOutputs(output))
+      outputSwitch.updateInputs(inputs, gate)
     })
   }
 
