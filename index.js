@@ -1,11 +1,10 @@
 const each = require('lodash/each')
 const get = require('lodash/get')
-const includes = require('lodash/includes')
 const map = require('lodash/map')
-const some = require('lodash/some')
 const upperCase = require('lodash/upperCase')
 
 const Cache = require('./src/cache')
+const DependencyChecker = require('./src/dependencyChecker')
 const Switch = require('./src/switch')
 
 module.exports = function (homebridge) {
@@ -90,24 +89,8 @@ class LogicSwitch {
     }
 
     _detectLoops () {
-        this.hasLoop = some(this.switches, s => this._hasLoop(s, []))
-    }
-
-    // recursively look for logic loops
-    _hasLoop (s, inputs) {
-        this.logger.debug('checking for loops', s.name, inputs)
-
-        if (includes(inputs, s.name)) {
-            this.logger.error('logic loop detected!', s.name, inputs)
-            return true
-        }
-
-        if (s.outputs.length === 0) {
-            return false
-        }
-
-        inputs.push(s.name)
-        return some(s.outputs, output => this._hasLoop(output, inputs))
+        const checker = new DependencyChecker(this.switches, this.logger)
+        this.hasLoop = checker.hasLoop()
     }
 
     // TODO: this could be made more efficient
