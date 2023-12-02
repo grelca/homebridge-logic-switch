@@ -1,28 +1,24 @@
-const each = require('lodash/each')
-const map = require('lodash/map')
-const upperCase = require('lodash/upperCase')
-
 const Cache = require('./src/cache')
 const DependencyChecker = require('./src/dependencyChecker')
-const Switch = require('./src/switch')
+const SwitchService = require('./src/switchService')
 
 module.exports = function (homebridge) {
     homebridge.registerAccessory('homebridge-logic-switch', 'LogicSwitch', LogicSwitch)
 }
 
 class LogicSwitch {
-    switches = {}
     hasLoop = false
 
     constructor (logger, config, homebridge) {
-        this.logger = logger
-
         this.hap = homebridge.hap
         this.name = config.name
 
         // TODO: make whether this is stateful or not configurable
         const dir = homebridge.user.persistPath();
-        this.cache = new Cache(dir, this.name)
+        const cache = new Cache(dir, config.name)
+
+        this.switchService = new SwitchService(this.hap, cache, logger)
+        this.dependencyChecker = new DependencyChecker(this.switchService, logger)
 
         this._initInformationService()
         this._configureSwitches(config)
@@ -37,9 +33,7 @@ class LogicSwitch {
             return []
         }
 
-        const services = map(this.switches, 'service')
-        this.logger.debug('num services', services.length)
-
+        const services = this.switchService.getAllServices()
         if (services.length > 0) {
             // don't return information service without any actual accessories
             services.unshift(this.informationService)
@@ -57,44 +51,22 @@ class LogicSwitch {
     }
 
     _configureSwitches ({ conditions }) {
-        each(conditions, condition => {
-            const { output, inputs, gate } = condition
-
-            const inputSwitches = this._createSwitches(inputs)
-            const outputSwitch = this._createSwitches([output])[0]
-
-            outputSwitch.gateType = upperCase(gate)
-            outputSwitch.inputs = inputSwitches
-
-            each(inputSwitches, input => input.outputs.push(outputSwitch))
-        })
-    }
-
-    _createSwitches (names) {
-        return map(names, name => {
-            if (!this.switches[name]) {
-                this.switches[name] = new Switch(name, this.cache, this.logger)
-            }
-
-            return this.switches[name]
-        })
+        this.switchService.createSwitchesFromConfig(conditions)
     }
 
     _createServices () {
-        each(this.switches, s => s.configureService(this.hap))
+        this.switchService.createServices()
     }
 
     _detectLoops () {
-        const checker = new DependencyChecker(this.switches, this.logger)
-        this.hasLoop = checker.hasLoop()
+        this.hasLoop = this.dependencyChecker.hasLoop()
     }
 
-    // TODO: this could be made more efficient
     _initOutputValues () {
         if (this.hasLoop) {
             return
         }
 
-        each(this.switches, input => each(input.outputs, output => output.recalculate()))
+        this.switchService.initSwitchValues()
     }
 }

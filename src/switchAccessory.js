@@ -9,7 +9,7 @@ const LOGIC_GATES = {
   NOT: (inputs, callback) => !some(inputs, callback)
 }
 
-class Switch {
+class SwitchAccessory {
   constructor (name, cache, logger) {
     this.name = name
     this.cache = cache
@@ -72,4 +72,4 @@ class Switch {
   }
 }
 
-module.exports = Switch
+module.exports = SwitchAccessory

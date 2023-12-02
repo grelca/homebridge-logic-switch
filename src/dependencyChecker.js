@@ -3,13 +3,13 @@ const some = require('lodash/some')
 
 // utility class to make sure there are no circular dependencies
 class DependencyChecker {
-  constructor (switches, logger) {
-    this.switches = switches
+  constructor (switchService, logger) {
+    this.switchService = switchService
     this.logger = logger
   }
 
   hasLoop () {
-    return some(this.switches, s => this._hasLoopRecursive(s))
+    return some(this.switchService.getAllSwitches(), s => this._hasLoopRecursive(s))
   }
 
   _hasLoopRecursive (s, inputs = []) {
