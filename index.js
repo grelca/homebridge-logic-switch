@@ -1,5 +1,4 @@
 const each = require('lodash/each')
-const get = require('lodash/get')
 const map = require('lodash/map')
 const upperCase = require('lodash/upperCase')
 
@@ -25,9 +24,8 @@ class LogicSwitch {
         const dir = homebridge.user.persistPath();
         this.cache = new Cache(dir, this.name)
 
-        const { conditions } = config
         this._initInformationService()
-        this._configureSwitches(conditions)
+        this._configureSwitches(config)
         this._createServices()
         this._detectLoops()
         this._initOutputValues()
@@ -58,18 +56,16 @@ class LogicSwitch {
             .setCharacteristic(this.hap.Characteristic.SerialNumber, this.hap.uuid.generate(this.name))
     }
 
-    _configureSwitches (conditions) {
+    _configureSwitches ({ conditions }) {
         each(conditions, condition => {
-            const output = get(condition, 'output')
-            const inputs = get(condition, 'inputs')
+            const { output, inputs, gate } = condition
 
             const inputSwitches = this._createSwitches(inputs)
             const outputSwitch = this._createSwitches([output])[0]
 
-            const gate = get(condition, 'gate')
             outputSwitch.gateType = upperCase(gate)
-
             outputSwitch.inputs = inputSwitches
+
             each(inputSwitches, input => input.outputs.push(outputSwitch))
         })
     }
