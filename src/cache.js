@@ -17,6 +17,10 @@ class Cache {
   set (key, value) {
     return this.storage.setItemSync(key, value)
   }
+
+  clear () {
+    return this.storage.clearSync()
+  }
 }
 
 module.exports = Cache
