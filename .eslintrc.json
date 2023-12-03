@@ -1,19 +1,18 @@
 {
   "env": {
-    "browser": true,
-    "commonjs": true,
-    "es2021": true
+    "es6": true,
+    "jest/globals": true,
+    "node": true
   },
-  "extends": "standard",
+  "extends": "standard-with-typescript",
+  "plugins": [
+    "@typescript-eslint",
+    "jest"
+  ],
   "parserOptions": {
     "ecmaVersion": "latest"
   },
-  "globals": {
-    "beforeEach": false,
-    "describe": false,
-    "expect": false,
-    "jest": false,
-    "test": false
-  },
-  "rules": {}
+  "rules": {
+    "@typescript-eslint/no-extraneous-class": 0
+  }
 }

@@ -1,8 +1,8 @@
-const SwitchAccessory = require('../src/switchAccessory')
-const SwitchStore = require('../src/switchStore')
+import MockSwitch from './shared/mockSwitch'
+import SwitchStore from '../src/switchStore'
 
-const switch1 = new SwitchAccessory()
-const switch2 = new SwitchAccessory()
+const switch1 = new MockSwitch()
+const switch2 = new MockSwitch()
 
 describe('switch store', () => {
   beforeEach(() => {

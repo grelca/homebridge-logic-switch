@@ -1,14 +1,19 @@
-const Cache = require('./src/cache')
-const DependencyChecker = require('./src/dependencyChecker')
-const InformationService = require('./src/informationService')
-const SwitchService = require('./src/switchService')
+import { type API, type AccessoryConfig, type Logging, type Service } from 'homebridge'
 
-module.exports = function (homebridge) {
+import Cache from './cache'
+import DependencyChecker from './dependencyChecker'
+import InformationService from './informationService'
+import SwitchService from './switchService'
+
+export default function (homebridge: API): void {
   homebridge.registerAccessory('homebridge-logic-switch', 'LogicSwitch', LogicSwitch)
 }
 
 class LogicSwitch {
-  constructor (logger, config, homebridge) {
+  informationService: InformationService
+  switchService: SwitchService
+
+  constructor (logger: Logging, config: AccessoryConfig, homebridge: API) {
     // TODO: make whether this is stateful or not configurable
     const dir = homebridge.user.persistPath()
     const cache = new Cache(dir, config.name)
@@ -23,7 +28,7 @@ class LogicSwitch {
     this.switchService.initSwitchValues()
   }
 
-  getServices () {
+  getServices (): Service[] {
     const services = [this.informationService.getService(), ...this.switchService.getHAPServices()]
     if (services.length === 1) {
       // don't return information service without any actual accessories
