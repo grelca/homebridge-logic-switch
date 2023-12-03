@@ -2,6 +2,7 @@ import pick from 'lodash/pick'
 
 import type ISwitchAccessory from './types/switchAccessory'
 
+// TODO: rewrite to remove @typescript-eslint/no-extraneous-class rule exclusion
 export default class SwitchStores {
   static switches: Record<string, ISwitchAccessory> = {}
 

@@ -13,11 +13,11 @@ export default class InformationService {
   }
 
   getService (): Service {
-    if (this.service === null) {
+    if (this.service === undefined) {
       this._createService()
     }
 
-    // @ts-expect-error this.service cannot be null here
+    // @ts-expect-error this.service cannot be undefined here
     return this.service
   }
 

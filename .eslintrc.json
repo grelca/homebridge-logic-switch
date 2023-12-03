@@ -1,9 +1,8 @@
 {
   "env": {
-    "node": true,
-    "commonjs": true,
     "es6": true,
-    "jest/globals": true
+    "jest/globals": true,
+    "node": true
   },
   "extends": "standard-with-typescript",
   "plugins": [

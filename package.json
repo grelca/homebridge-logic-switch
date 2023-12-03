@@ -2,7 +2,7 @@
   "name": "homebridge-logic-switch",
   "version": "1.0.0",
   "description": "Logic-based switches for homebridge",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
     "build": "tsc",
     "lint": "eslint ./src --ext .ts",
