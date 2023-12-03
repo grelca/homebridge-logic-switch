@@ -3,11 +3,11 @@ import map from 'lodash/map'
 
 import { type HAP, type Logging, type Service } from 'homebridge'
 
+import SwitchAccessory from './switchAccessory'
+import SwitchStore from './switchStore'
 import type ICache from './types/cache'
 import type IConfigCondition from './types/configCondition'
 import type IDependencyChecker from './types/dependencyChecker'
-import SwitchAccessory from './switchAccessory'
-import SwitchStore from './switchStore'
 
 export default class SwitchService {
   hasLoop?: boolean

@@ -8,13 +8,13 @@ jest.mock('../src/switchStore', () => ({
 }))
 
 import SwitchAccessory from '../src/switchAccessory'
-
-let s: SwitchAccessory
+import mockCache from './shared/mockCache'
+import mockLogger from './shared/mockLogger'
 
 const SWITCH_NAME = 'switch-name'
 const SWITCH_VALUE = true
-import mockCache from './shared/mockCache'
-import mockLogger from './shared/mockLogger'
+
+let s: SwitchAccessory
 
 describe('switch accessory', () => {
   beforeEach(() => {

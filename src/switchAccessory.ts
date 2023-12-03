@@ -3,16 +3,11 @@ import get from 'lodash/get'
 import some from 'lodash/some'
 import upperCase from 'lodash/upperCase'
 
-import {
-  type Characteristic,
-  type HAP,
-  type Logging,
-  type Service
-} from 'homebridge'
+import { type Characteristic, type HAP, type Logging, type Service } from 'homebridge'
 
+import SwitchStore from './switchStore'
 import type ICache from './types/cache'
 import type ISwitchAccessory from './types/switchAccessory'
-import SwitchStore from './switchStore'
 
 // TODO: support more logic gates?
 const LOGIC_GATES = {

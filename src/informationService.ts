@@ -1,5 +1,6 @@
-import { version } from '../package.json'
 import { type HAP, type Service } from 'homebridge'
+
+import { version } from '../package.json'
 
 export default class InformationService {
   hap: HAP

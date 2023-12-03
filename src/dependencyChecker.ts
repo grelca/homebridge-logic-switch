@@ -3,9 +3,9 @@ import some from 'lodash/some'
 
 import { type Logging } from 'homebridge'
 
+import SwitchStore from './switchStore'
 import type IDependencyChecker from './types/dependencyChecker'
 import type ISwitchAccessory from './types/switchAccessory'
-import SwitchStore from './switchStore'
 
 // utility class to make sure there are no circular dependencies
 export default class DependencyChecker implements IDependencyChecker {

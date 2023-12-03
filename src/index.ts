@@ -1,4 +1,4 @@
-import { type API, type Logging, type AccessoryConfig, type Service } from 'homebridge'
+import { type API, type AccessoryConfig, type Logging, type Service } from 'homebridge'
 
 import Cache from './cache'
 import DependencyChecker from './dependencyChecker'
