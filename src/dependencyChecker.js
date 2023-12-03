@@ -21,12 +21,13 @@ class DependencyChecker {
       return true
     }
 
-    if (!s.isOutput()) {
+    const outputs = s.getOutputs()
+    if (outputs.length === 0) {
       return false
     }
 
     inputs.push(s.name)
-    return some(s.getOutputs(), output => this._hasLoopRecursive(output, inputs))
+    return some(outputs, output => this._hasLoopRecursive(output, inputs))
   }
 }
 
