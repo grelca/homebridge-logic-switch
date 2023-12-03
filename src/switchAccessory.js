@@ -25,19 +25,19 @@ class SwitchAccessory {
   }
 
   getInputs () {
-    return SwitchStore.getList(this.inputs)
+    return SwitchStore.getList(...this.inputs)
   }
 
   getOutputs () {
-    return SwitchStore.getList(this.outputs)
+    return SwitchStore.getList(...this.outputs)
   }
 
   isInput () {
-    return this.getOutputs().length > 0
+    return this.outputs.length > 0
   }
 
   isOutput () {
-    return this.getInputs().length > 0
+    return this.inputs.length > 0
   }
 
   updateInputs (inputs, gate) {
@@ -84,7 +84,9 @@ class SwitchAccessory {
     this.value = value
     this.cache.set(this.name, value)
 
-    this.getOutputs().forEach(output => output.recalculate())
+    if (this.isInput()) {
+      this.getOutputs().forEach(output => output.recalculate())
+    }
   }
 }
 
