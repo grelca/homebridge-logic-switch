@@ -22,4 +22,4 @@ describe('cache operations', () => {
     cache.clear()
     expect(cache.get('key3')).toBe(undefined)
   })
-});
+})

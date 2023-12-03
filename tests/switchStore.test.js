@@ -1,5 +1,5 @@
-const SwitchAccessory = require('../src/switchAccessory');
-const SwitchStore = require('../src/switchStore');
+const SwitchAccessory = require('../src/switchAccessory')
+const SwitchStore = require('../src/switchStore')
 
 const switch1 = new SwitchAccessory()
 const switch2 = new SwitchAccessory()
@@ -52,4 +52,4 @@ describe('switch store', () => {
   test('when different switch, exists() returns false', () => {
     expect(SwitchStore.exists('baz')).toEqual(false)
   })
-});
+})

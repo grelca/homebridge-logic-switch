@@ -1,8 +1,7 @@
 const each = require('lodash/each')
 const map = require('lodash/map')
-const upperCase = require('lodash/upperCase')
 
-const SwitchAccessory = require("./switchAccessory")
+const SwitchAccessory = require('./switchAccessory')
 const SwitchStore = require('./switchStore')
 
 class SwitchService {
@@ -27,7 +26,7 @@ class SwitchService {
     return services
   }
 
-  createSwitchesFromConfig(conditions) {
+  createSwitchesFromConfig (conditions) {
     each(conditions, condition => {
       const { output, inputs, gate } = condition
 
@@ -40,7 +39,7 @@ class SwitchService {
   }
 
   _createSwitches (names) {
-      return map(names, name => this._createSwitch(name))
+    return map(names, name => this._createSwitch(name))
   }
 
   _createSwitch (name) {

@@ -1,7 +1,7 @@
 class InformationService {
   service = null
 
-  constructor(hap, name) {
+  constructor (hap, name) {
     this.hap = hap
     this.name = name
   }

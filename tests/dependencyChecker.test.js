@@ -64,4 +64,4 @@ describe('circular dependency checker', () => {
 
     expect(checker.hasLoop()).toEqual(true)
   })
-});
+})

@@ -321,4 +321,4 @@ describe('switch accessory', () => {
 
     test.todo('recalculate outputs when changed')
   })
-});
+})
