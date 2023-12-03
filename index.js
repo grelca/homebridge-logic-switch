@@ -14,49 +14,24 @@ class LogicSwitch {
         // TODO: make whether this is stateful or not configurable
         const dir = homebridge.user.persistPath();
         const cache = new Cache(dir, config.name)
+        const dependencyChecker = new DependencyChecker(logger)
 
         this.informationService = new InformationService(homebridge.hap, config.name)
-        this.switchService = new SwitchService(homebridge.hap, cache, logger)
-        this.dependencyChecker = new DependencyChecker(logger)
+        this.switchService = new SwitchService(homebridge.hap, dependencyChecker, cache, logger)
 
-        this._configureSwitches(config)
-        this._createServices()
-        this._detectLoops()
-        this._initOutputValues()
+        this.switchService.createSwitchesFromConfig(config.conditions)
+        this.switchService.createHAPServices()
+        this.switchService.detectLoops()
+        this.switchService.initSwitchValues()
     }
 
     getServices () {
-        // TODO: make this smarter, disable only the outputs with invalid inputs
-        if (this.hasLoop) {
+        const services = [this.informationService.getService(), ...this.switchService.getHAPServices()]
+        if (services.length === 1) {
+            // don't return information service without any actual accessories
             return []
         }
 
-        const services = this.switchService.getHAPServices()
-        if (services.length > 0) {
-            // don't return information service without any actual accessories
-            services.unshift(this.informationService.getService())
-        }
-
         return services
-    }
-
-    _configureSwitches ({ conditions }) {
-        this.switchService.createSwitchesFromConfig(conditions)
-    }
-
-    _createServices () {
-        this.switchService.createHAPServices()
-    }
-
-    _detectLoops () {
-        this.hasLoop = this.dependencyChecker.hasLoop()
-    }
-
-    _initOutputValues () {
-        if (this.hasLoop) {
-            return
-        }
-
-        this.switchService.initSwitchValues()
     }
 }

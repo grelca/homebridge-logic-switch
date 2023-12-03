@@ -6,13 +6,21 @@ const SwitchAccessory = require("./switchAccessory")
 const SwitchStore = require('./switchStore')
 
 class SwitchService {
-  constructor (hap, cache, logger) {
+  hasLoop = false
+
+  constructor (hap, dependencyChecker, cache, logger) {
     this.hap = hap
+    this.dependencyChecker = dependencyChecker
     this.cache = cache
     this.logger = logger
   }
 
   getHAPServices () {
+    // TODO: make this smarter, disable only the outputs with invalid inputs
+    if (this.hasLoop) {
+      return []
+    }
+
     const services = map(SwitchStore.all(), 'service')
     this.logger.debug('num services', services.length)
 
@@ -49,7 +57,15 @@ class SwitchService {
     each(SwitchStore.all(), s => s.createHAPService(this.hap))
   }
 
+  detectLoops () {
+    this.hasLoop = this.dependencyChecker.hasLoop()
+  }
+
   initSwitchValues () {
+    if (this.hasLoop) {
+      return
+    }
+
     // TODO: this could be made more efficient
     each(SwitchStore.all(), input => each(input.getOutputs(), output => output.recalculate()))
   }
