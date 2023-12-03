@@ -1,5 +1,6 @@
 const Cache = require('./src/cache')
 const DependencyChecker = require('./src/dependencyChecker')
+const InformationService = require('./src/informationService')
 const SwitchService = require('./src/switchService')
 
 module.exports = function (homebridge) {
@@ -14,10 +15,10 @@ class LogicSwitch {
         const dir = homebridge.user.persistPath();
         const cache = new Cache(dir, config.name)
 
+        this.informationService = new InformationService(homebridge.hap, config.name)
         this.switchService = new SwitchService(homebridge.hap, cache, logger)
         this.dependencyChecker = new DependencyChecker(logger)
 
-        this._initInformationService(homebridge.hap, config.name)
         this._configureSwitches(config)
         this._createServices()
         this._detectLoops()
@@ -33,18 +34,10 @@ class LogicSwitch {
         const services = this.switchService.getHAPServices()
         if (services.length > 0) {
             // don't return information service without any actual accessories
-            services.unshift(this.informationService)
+            services.unshift(this.informationService.getService())
         }
 
         return services
-    }
-
-    _initInformationService (hap, name) {
-        this.informationService = new hap.Service.AccessoryInformation()
-        this.informationService.setCharacteristic(hap.Characteristic.Manufacturer, 'Logic Switch')
-            .setCharacteristic(hap.Characteristic.Model, 'Logic Switch')
-            .setCharacteristic(hap.Characteristic.FirmwareRevision, require('./package.json').version)
-            .setCharacteristic(hap.Characteristic.SerialNumber, hap.uuid.generate(name))
     }
 
     _configureSwitches ({ conditions }) {
