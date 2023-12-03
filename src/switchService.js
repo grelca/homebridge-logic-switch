@@ -30,16 +30,12 @@ class SwitchService {
     each(conditions, condition => {
       const { output, inputs, gate } = condition
 
-      const inputSwitches = this._createSwitches(inputs)
-      const outputSwitch = this._createSwitches([output])[0]
+      const inputSwitches = map(inputs, name => this._createSwitch(name))
+      const outputSwitch = this._createSwitch(output)
 
       each(inputSwitches, input => input.updateOutputs(output))
       outputSwitch.updateInputs(inputs, gate)
     })
-  }
-
-  _createSwitches (names) {
-    return map(names, name => this._createSwitch(name))
   }
 
   _createSwitch (name) {
