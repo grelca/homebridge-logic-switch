@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint . --fix",
+    "lint-check": "eslint .",
     "test": "jest"
   },
   "repository": {
