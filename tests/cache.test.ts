@@ -1,5 +1,6 @@
-const Cache = require('../src/cache')
-const path = require('path')
+import path from 'path'
+
+import Cache from '../src/cache'
 
 const directory = path.join(__dirname, '/test-storage')
 const cache = new Cache(directory)
@@ -17,8 +18,8 @@ describe('cache operations', () => {
   })
 
   test('cache can be cleared', () => {
-    cache.set('key3', 123)
-    expect(cache.get('key3')).toBe(123)
+    cache.set('key3', false)
+    expect(cache.get('key3')).toBe(false)
     cache.clear()
     expect(cache.get('key3')).toBe(undefined)
   })

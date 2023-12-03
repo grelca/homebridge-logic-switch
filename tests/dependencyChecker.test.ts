@@ -1,25 +1,21 @@
-const switches = []
+import MockSwitch from './shared/mockSwitch'
+
+const switches: MockSwitch[] = []
 const mockAll = jest.fn(() => switches)
 
 jest.mock('../src/switchStore', () => ({
   all: mockAll
 }))
 
-const DependencyChecker = require('../src/dependencyChecker')
-
-const mockLogger = {
-  debug: jest.fn(),
-  error: jest.fn()
-}
+import DependencyChecker from '../src/dependencyChecker'
+import mockLogger from './shared/mockLogger'
 
 const checker = new DependencyChecker(mockLogger)
 
 let switchCounter = 0
 const mockSwitch = () => {
-  const s = {
-    name: `switch-${++switchCounter}`,
-    getOutputs: () => []
-  }
+  const s = new MockSwitch()
+  s.name = `${++switchCounter}-mock-switch`
 
   switches.push(s)
   return s

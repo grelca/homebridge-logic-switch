@@ -1,26 +1,31 @@
-class InformationService {
-  service = null
+import { version } from '../package.json'
+import { type HAP, type Service } from 'homebridge'
 
-  constructor (hap, name) {
+export default class InformationService {
+  hap: HAP
+  name: string
+
+  service?: Service
+
+  constructor (hap: HAP, name: string) {
     this.hap = hap
     this.name = name
   }
 
-  getService () {
+  getService (): Service {
     if (this.service === null) {
       this._createService()
     }
 
+    // @ts-expect-error this.service cannot be null here
     return this.service
   }
 
-  _createService () {
+  _createService (): void {
     this.service = new this.hap.Service.AccessoryInformation()
     this.service.setCharacteristic(this.hap.Characteristic.Manufacturer, 'Logic Switch')
       .setCharacteristic(this.hap.Characteristic.Model, 'Logic Switch')
-      .setCharacteristic(this.hap.Characteristic.FirmwareRevision, require('../package.json').version)
+      .setCharacteristic(this.hap.Characteristic.FirmwareRevision, version)
       .setCharacteristic(this.hap.Characteristic.SerialNumber, this.hap.uuid.generate(this.name))
   }
 }
-
-module.exports = InformationService

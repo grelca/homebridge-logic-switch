@@ -13,4 +13,4 @@ jobs:
         with:
           node-version: 20.x
       - run: npm ci
-      - run: npm run lint-check
+      - run: npm run lint

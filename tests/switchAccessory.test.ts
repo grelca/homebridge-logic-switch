@@ -1,31 +1,25 @@
-let relatedSwitches = [jest.fn()]
+import MockSwitch from './shared/mockSwitch'
+
+let relatedSwitches: MockSwitch[] = [new MockSwitch()]
 const mockGetList = jest.fn(() => relatedSwitches)
 
 jest.mock('../src/switchStore', () => ({
   getList: mockGetList
 }))
 
-const SwitchAccessory = require('../src/switchAccessory')
+import SwitchAccessory from '../src/switchAccessory'
+
+let s: SwitchAccessory
 
 const SWITCH_NAME = 'switch-name'
-const SWITCH_VALUE = 'switch-value'
-const mockCache = {
-  set: jest.fn()
-}
-const mockLogger = {
-  debug: jest.fn(),
-  info: jest.fn()
-}
-
-const s = new SwitchAccessory(SWITCH_NAME, SWITCH_VALUE, mockCache, mockLogger)
+const SWITCH_VALUE = true
+import mockCache from './shared/mockCache'
+import mockLogger from './shared/mockLogger'
 
 describe('switch accessory', () => {
   beforeEach(() => {
     // reset switch values for each test
-    s.value = SWITCH_VALUE
-    s.inputs = []
-    s.outputs = []
-    s.logicGate = 'AND'
+    s = new SwitchAccessory(SWITCH_NAME, SWITCH_VALUE, mockCache, mockLogger)
   })
 
   test('getInputs() gets list of switches from switch store', () => {
@@ -104,6 +98,7 @@ describe('switch accessory', () => {
         }
       }
 
+      // @ts-ignore
       s.createHAPService(hap)
       expect(s.service).toEqual(mockService)
       expect(s.characteristic).toEqual(mockCharacteristic)
@@ -127,6 +122,7 @@ describe('switch accessory', () => {
         }
       }
 
+      // @ts-ignore
       s.createHAPService(hap)
       expect(s.service).toEqual(mockService)
       expect(s.characteristic).toEqual(mockCharacteristic)
@@ -143,15 +139,18 @@ describe('switch accessory', () => {
 
     beforeEach(() => {
       s.inputs = ['foo']
+      // @ts-ignore
       s.characteristic = {
         updateValue: mockUpdateValue
       }
     })
 
-    const configureRelatedSwitches = (...values) => {
-      relatedSwitches = values.map(value => ({
-        value
-      }))
+    const configureRelatedSwitches = (...values: boolean[]) => {
+      relatedSwitches = values.map(value => {
+        const s = new MockSwitch()
+        s.value = value
+        return s
+      })
     }
 
     test('recalculate() exits if not an output switch', () => {
