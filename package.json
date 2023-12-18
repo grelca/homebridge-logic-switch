@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "node-persist": "^2.1.0"
+    "node-persist": "^4.0.1"
   },
   "keywords": [
     "homebridge-plugin"
